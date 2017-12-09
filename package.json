@@ -1,0 +1,16 @@
+{
+  "name": "afimport",
+  "version": "1.0.0",
+  "description": "Easily import classes in Node.js",
+  "main": "index.js",
+  "dependencies": {
+    "glob": "7.1"
+  },
+  "keywords": [
+    "import",
+    "include",
+    "models"
+  ],
+  "author": "Lorenzo Stanton",
+  "license": "Apache-2.0"
+}
