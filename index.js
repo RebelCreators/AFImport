@@ -2,7 +2,7 @@ var fs = require("fs");
 var path = require("path");
 var glob = require("glob");
 
-var includes = {};
+var includes = /** @type {nameSpacedName : {className: string, clazz: Function, namespace: string}} */ {};
 
 var includeQueue = /** @type {nameSpacedClassName:string, classPath: string, options: object} */ [];
 
@@ -17,7 +17,7 @@ function addToIncludedQueue(classPaths, options) {
             continue;
         }
         className = path.basename(className, '.js');
-        var nameSpacedClassName = getOption(options, "namespace") + className;
+        var nameSpacedClassName = getOption(options, "namespace") + "." + className;
         includeQueue.push({nameSpacedClassName: nameSpacedClassName, classPath: classPaths[i], options: options});
     }
 }
@@ -36,7 +36,8 @@ function includeClass(className, options) {
         //ignore hidden files
         return null;
     }
-    var nameSpacedClassName = getOption(options, "namespace") + className;
+    var namespace = getOption(options, "namespace");
+    var nameSpacedClassName = namespace + "." + className;
     includeQueue = includeQueue.filter(function (includedClass) {
         return includedClass.nameSpacedClassName != nameSpacedClassName;
     });
@@ -47,13 +48,13 @@ function includeClass(className, options) {
     if (!clazz) {
         throw new Error("AFImport: Class " + className + " Not found");
     }
-    includes[nameSpacedClassName] = clazz;
+    includes[nameSpacedClassName] = {clazz: clazz, className: className, namespace: namespace};
 
     return className;
 }
 
 var optionsDefaults = {
-    namespace: "."
+    namespace: "com.afimport.default"
 };
 
 function getOption(option, key) {
@@ -97,18 +98,19 @@ module.exports.include = function (filePattern, options) {
 
 module.exports.provide = function (clazz, className, options) {
     className = path.basename(className, '.js');
-    var nameSpacedClassName = getOption(options, "namespace") + className;
+    var namespace = getOption(options, "namespace");
+    var nameSpacedClassName = namespace + "." + className;
     if (includes[nameSpacedClassName]) {
         throw new Error("AFImport: Class " + className + " already provided.");
         return;
     }
-    includes[nameSpacedClassName] = clazz;
+    includes[nameSpacedClassName] = {clazz: clazz, className: className, namespace: namespace};
 }
 
 module.exports.require = function (className, options) {
     className = path.basename(className, '.js');
-    var nameSpacedClassName = getOption(options, "namespace") + className;
-    var clazz = includes[nameSpacedClassName];
+    var nameSpacedClassName = getOption(options, "namespace") + "." + className;
+    var clazz = (includes[nameSpacedClassName] || {})["clazz"];
     if (!clazz) {
         for (var i = 0; i < includeQueue.length; i++) {
             if (includeQueue[i].nameSpacedClassName == nameSpacedClassName) {
@@ -119,4 +121,14 @@ module.exports.require = function (className, options) {
         throw new Error("AFImport: Class " + className + " Not inlcuded.");
     }
     return clazz;
+};
+
+module.exports.exports = function () {
+    var exports = {}
+
+    for (var key in includes) {
+        var name = includes[key].namespace == optionsDefaults.namespace ? includes[key].className : key;
+        exports[name] = includes[key].clazz;
+    }
+    return exports;
 };
