@@ -1,6 +1,6 @@
 {
   "name": "afimport",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Easily import classes in Node.js",
   "main": "index.js",
   "dependencies": {
