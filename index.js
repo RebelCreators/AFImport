@@ -123,12 +123,38 @@ module.exports.require = function (className, options) {
     return clazz;
 };
 
-module.exports.exports = function () {
-    var exports = {}
+function AFImortModule () {
+};
+AFImortModule.prototype.property;
+AFImortModule.prototype.previous;
 
+
+module.exports.exportModule = function () {
+    var exports = new AFImortModule();
     for (var key in includes) {
-        var name = includes[key].namespace == optionsDefaults.namespace ? includes[key].className : key;
-        exports[name] = includes[key].clazz;
+        exports.property = includes[key];
+        var newExports = new AFImortModule();
+        newExports.previous = exports;
+        exports = newExports;
+    }
+    exports = exports.previous;
+
+    if (!exports.property) {
+       return null;
     }
     return exports;
+};
+
+module.exports.importModule = function (afModule) {
+    if (!(afModule.constructor.name == "AFImortModule")) {
+        throw new Error("incorrect type in module");
+    }
+    var exports = afModule;
+    while (exports) {
+        if (!(afModule.constructor.name == "AFImortModule")) {
+            throw new Error("incorrect type in module");
+        }
+        includes[exports.property.namespace + "." + exports.property.className] = exports.property;
+        exports = exports.previous;
+    }
 };
