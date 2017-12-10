@@ -3,9 +3,13 @@ var path = require("path");
 var glob = require("glob");
 
 var includes = /** @type {nameSpacedName : {className: string, clazz: Function, namespace: string, options: {}}} */ {};
+var includeQueue = /** @type Array.<{nameSpacedClassName:string, classPath: string, options: object}> */ [];
 
-var includeQueue = /** @type {nameSpacedClassName:string, classPath: string, options: object} */ [];
-
+/**
+ * @private
+ * @param classPaths: Array.<string>
+ * @param options: {namespace: string, override: boolean}
+ */
 function addToIncludedQueue(classPaths, options) {
     for (var i = 0; i < classPaths.length; i++) {
         var className = classPaths[i];
@@ -22,6 +26,12 @@ function addToIncludedQueue(classPaths, options) {
     }
 }
 
+/**
+ * @private
+ * @param className: string
+ * @param options: {namespace: string, override: boolean}
+ * @returns {?string}
+ */
 function includeClass(className, options) {
     if (path.extname(className) != ".js") {
         return null;
@@ -55,11 +65,21 @@ function includeClass(className, options) {
     return className;
 }
 
+/**
+ *
+ * @type {{namespace: string, override: boolean}}
+ */
 var optionsDefaults = {
     namespace: "com.afimport.default",
     override: false
 };
 
+/**
+ * @private
+ * @param option: {namespace: string, override: boolean}
+ * @param key: string
+ * @returns {*}
+ */
 function getOption(option, key) {
     if (!option) {
         return optionsDefaults[key];
@@ -67,6 +87,12 @@ function getOption(option, key) {
     return option[key] || optionsDefaults[key];
 }
 
+/**
+ *
+ * @param filePattern: string
+ * @param options: {namespace: string, override: boolean}
+ * @returns {?Array.<string>}
+ */
 module.exports.include = function (filePattern, options) {
     if (Array.isArray(filePattern)) {
         var included = [];
@@ -99,6 +125,12 @@ module.exports.include = function (filePattern, options) {
     }
 };
 
+/**
+ *
+ * @param clazz: Object
+ * @param className: string
+ * @param options: {namespace: string, override: boolean}
+ */
 module.exports.provide = function (clazz, className, options) {
     className = path.basename(className, '.js');
     var namespace = getOption(options, "namespace");
@@ -108,8 +140,14 @@ module.exports.provide = function (clazz, className, options) {
         return;
     }
     includes[nameSpacedClassName] = {clazz: clazz, className: className, namespace: namespace, options: options};
-}
+};
 
+/**
+ *
+ * @param className: string
+ * @param options: {namespace: string, override: boolean}
+ * @returns {Object}
+ */
 module.exports.require = function (className, options) {
     className = path.basename(className, '.js');
     var nameSpacedClassName = getOption(options, "namespace") + "." + className;
@@ -126,12 +164,19 @@ module.exports.require = function (className, options) {
     return clazz;
 };
 
-function AFImortModule () {
+/**
+ *
+ * @constructor
+ */
+function AFImortModule() {
 };
 AFImortModule.prototype.property;
 AFImortModule.prototype.previous;
 
-
+/**
+ *
+ * @returns {?AFImortModule}
+ */
 module.exports.exportModule = function () {
     var exports = new AFImortModule();
     for (var key in includes) {
@@ -148,6 +193,10 @@ module.exports.exportModule = function () {
     return exports;
 };
 
+/**
+ *
+ * @param afModule: AFImortModule
+ */
 module.exports.importModule = function (afModule) {
     if (!(afModule.constructor.name == "AFImortModule")) {
         throw new Error("incorrect type in module");
