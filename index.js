@@ -2,7 +2,7 @@ var fs = require("fs");
 var path = require("path");
 var glob = require("glob");
 
-var includes = /** @type {nameSpacedName : {className: string, clazz: Function, namespace: string}} */ {};
+var includes = /** @type {nameSpacedName : {className: string, clazz: Function, namespace: string, options: {}}} */ {};
 
 var includeQueue = /** @type {nameSpacedClassName:string, classPath: string, options: object} */ [];
 
@@ -41,20 +41,23 @@ function includeClass(className, options) {
     includeQueue = includeQueue.filter(function (includedClass) {
         return includedClass.nameSpacedClassName != nameSpacedClassName;
     });
-    if (includes[nameSpacedClassName]) {
+    if (includes[nameSpacedClassName] && getOption(includes[nameSpacedClassName].options, "override") == true) {
+        return className;
+    } else if (includes[nameSpacedClassName]) {
         throw new Error("AFImport: Class already included.");
     }
     var clazz = require(path.resolve(basePath) + path.sep + className + ".js");
     if (!clazz) {
         throw new Error("AFImport: Class " + className + " Not found");
     }
-    includes[nameSpacedClassName] = {clazz: clazz, className: className, namespace: namespace};
+    includes[nameSpacedClassName] = {clazz: clazz, className: className, namespace: namespace, options: options};
 
     return className;
 }
 
 var optionsDefaults = {
-    namespace: "com.afimport.default"
+    namespace: "com.afimport.default",
+    override: false
 };
 
 function getOption(option, key) {
@@ -104,7 +107,7 @@ module.exports.provide = function (clazz, className, options) {
         throw new Error("AFImport: Class " + className + " already provided.");
         return;
     }
-    includes[nameSpacedClassName] = {clazz: clazz, className: className, namespace: namespace};
+    includes[nameSpacedClassName] = {clazz: clazz, className: className, namespace: namespace, options: options};
 }
 
 module.exports.require = function (className, options) {
@@ -140,7 +143,7 @@ module.exports.exportModule = function () {
     exports = exports.previous;
 
     if (!exports.property) {
-       return null;
+        return null;
     }
     return exports;
 };
