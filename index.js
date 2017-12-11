@@ -51,10 +51,13 @@ function includeClass(className, options) {
     includeQueue = includeQueue.filter(function (includedClass) {
         return includedClass.nameSpacedClassName != nameSpacedClassName;
     });
-    if (includes[nameSpacedClassName] && getOption(includes[nameSpacedClassName].options, "override") == true) {
-        return className;
-    } else if (includes[nameSpacedClassName]) {
-        throw new Error("AFImport: Class already included.");
+
+    if (getOption(options, "override") == false) {
+        if (includes[nameSpacedClassName] && getOption(includes[nameSpacedClassName].options, "override") == true) {
+            return className;
+        } else if (includes[nameSpacedClassName]) {
+            throw new Error("AFImport: Class already included.");
+        }
     }
     var clazz = require(path.resolve(basePath) + path.sep + className + ".js");
     if (!clazz) {
@@ -127,7 +130,7 @@ module.exports.include = function (filePattern, options) {
 
 /**
  *
- * @param clazz: Object
+ * @param clazz: Function
  * @param className: string
  * @param options: {namespace: string, override: boolean}
  */
@@ -146,7 +149,7 @@ module.exports.provide = function (clazz, className, options) {
  *
  * @param className: string
  * @param options: {namespace: string, override: boolean}
- * @returns {Object}
+ * @returns {Function}
  */
 module.exports.require = function (className, options) {
     className = path.basename(className, '.js');
