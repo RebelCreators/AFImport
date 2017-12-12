@@ -2,13 +2,28 @@ var fs = require("fs");
 var path = require("path");
 var glob = require("glob");
 
-var includes = /** @type {nameSpacedName : {className: string, clazz: Function, namespace: string, options: {}}} */ {};
-var includeQueue = /** @type Array.<{nameSpacedClassName:string, classPath: string, options: object}> */ [];
+/**
+ * Class importing layer
+ * @module afimport
+ */
+
+
+/**
+ *
+ * @private
+ * @type {{string : {className: string, clazz: Function, namespace: string, options: Object}}}
+ */
+var includes = {};
+/**
+ * @private
+ * @type {Array.<{nameSpacedClassName:string, classPath: string, options: Object}>}
+ */
+var includeQueue = [];
 
 /**
  * @private
- * @param classPaths: Array.<string>
- * @param options: {namespace: string, override: boolean}
+ * @param {Array.<string>} classPaths
+ * @param {?{namespace: ?string, override: ?boolean}} options
  */
 function addToIncludedQueue(classPaths, options) {
     for (var i = 0; i < classPaths.length; i++) {
@@ -21,15 +36,15 @@ function addToIncludedQueue(classPaths, options) {
             continue;
         }
         className = path.basename(className, '.js');
-        var nameSpacedClassName = getOption(options, "namespace") + "." + className;
+        var nameSpacedClassName = getOption("namespace", options) + "." + className;
         includeQueue.push({nameSpacedClassName: nameSpacedClassName, classPath: classPaths[i], options: options});
     }
 }
 
 /**
  * @private
- * @param className: string
- * @param options: {namespace: string, override: boolean}
+ * @param {string} className
+ * @param {?{namespace: ?string, override: ?boolean}} options
  * @returns {?string}
  */
 function includeClass(className, options) {
@@ -46,14 +61,14 @@ function includeClass(className, options) {
         //ignore hidden files
         return null;
     }
-    var namespace = getOption(options, "namespace");
+    var namespace = getOption("namespace", options);
     var nameSpacedClassName = namespace + "." + className;
     includeQueue = includeQueue.filter(function (includedClass) {
         return includedClass.nameSpacedClassName != nameSpacedClassName;
     });
 
-    if (getOption(options, "override") == false) {
-        if (includes[nameSpacedClassName] && getOption(includes[nameSpacedClassName].options, "override") == true) {
+    if (getOption("override", options) == false) {
+        if (includes[nameSpacedClassName] && getOption("override", includes[nameSpacedClassName].options) == true) {
             return className;
         } else if (includes[nameSpacedClassName]) {
             throw new Error("AFImport: Class already included.");
@@ -79,11 +94,12 @@ var optionsDefaults = {
 
 /**
  * @private
- * @param option: {namespace: string, override: boolean}
- * @param key: string
+ *
+ * @param {string} key
+ * @param {?{namespace: ?string, override: ?boolean}} option
  * @returns {*}
  */
-function getOption(option, key) {
+function getOption(key, option) {
     if (!option) {
         return optionsDefaults[key];
     }
@@ -92,8 +108,8 @@ function getOption(option, key) {
 
 /**
  *
- * @param filePattern: string
- * @param options: {namespace: string, override: boolean}
+ * @param {string} filePattern
+ * @param {?{namespace: ?string, override: ?boolean}} options
  * @returns {?Array.<string>}
  */
 module.exports.include = function (filePattern, options) {
@@ -130,13 +146,13 @@ module.exports.include = function (filePattern, options) {
 
 /**
  *
- * @param clazz: Function
- * @param className: string
- * @param options: {namespace: string, override: boolean}
+ * @param {Function} class
+ * @param {string} className
+ * @param {?{namespace: ?string, override: ?boolean}} options
  */
 module.exports.provide = function (clazz, className, options) {
     className = path.basename(className, '.js');
-    var namespace = getOption(options, "namespace");
+    var namespace = getOption("namespace", options);
     var nameSpacedClassName = namespace + "." + className;
     if (includes[nameSpacedClassName]) {
         throw new Error("AFImport: Class " + className + " already provided.");
@@ -147,13 +163,13 @@ module.exports.provide = function (clazz, className, options) {
 
 /**
  *
- * @param className: string
- * @param options: {namespace: string, override: boolean}
+ * @param {string} className
+ * @param {?{namespace: ?string, override: ?boolean}} options
  * @returns {Function}
  */
 module.exports.require = function (className, options) {
     className = path.basename(className, '.js');
-    var nameSpacedClassName = getOption(options, "namespace") + "." + className;
+    var nameSpacedClassName = getOption("namespace", options) + "." + className;
     var clazz = (includes[nameSpacedClassName] || {})["clazz"];
     if (!clazz) {
         for (var i = 0; i < includeQueue.length; i++) {
@@ -169,14 +185,16 @@ module.exports.require = function (className, options) {
 
 /**
  *
- * @constructor
+ * @constructor AFImortModule
  */
 function AFImortModule() {
-};
+}
 AFImortModule.prototype.property;
 AFImortModule.prototype.previous;
 
 /**
+ *
+ * Exports an AFImortModule
  *
  * @returns {?AFImortModule}
  */
@@ -198,7 +216,9 @@ module.exports.exportModule = function () {
 
 /**
  *
- * @param afModule: AFImortModule
+ * Imports an AFImortModule
+ *
+ * @param {AFImortModule} afModule
  */
 module.exports.importModule = function (afModule) {
     if (!(afModule.constructor.name == "AFImortModule")) {
