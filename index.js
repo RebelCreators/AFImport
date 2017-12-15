@@ -1,12 +1,11 @@
-var fs = require("fs");
-var path = require("path");
-var glob = require("glob");
+const fs = require("fs");
+const path = require("path");
+const glob = require("glob");
 
 /**
  * Class importing layer
  * @module afimport
  */
-
 
 /**
  *
@@ -51,7 +50,7 @@ function includeClass(className, options) {
     if (path.extname(className) != ".js") {
         return null;
     }
-    var basePath = path.dirname(className);
+    const basePath = path.dirname(className);
     if (!basePath) {
         throw new Error("AFImport: Could not resolve base path.");
     }
@@ -61,8 +60,8 @@ function includeClass(className, options) {
         //ignore hidden files
         return null;
     }
-    var namespace = getOption("namespace", options);
-    var nameSpacedClassName = namespace + "." + className;
+    const namespace = getOption("namespace", options);
+    const nameSpacedClassName = namespace + "." + className;
     includeQueue = includeQueue.filter(function (includedClass) {
         return includedClass.nameSpacedClassName != nameSpacedClassName;
     });
@@ -74,7 +73,7 @@ function includeClass(className, options) {
             throw new Error("AFImport: Class already included.");
         }
     }
-    var clazz = require(path.resolve(basePath) + path.sep + className + ".js");
+    const clazz = require(path.resolve(basePath) + path.sep + className + ".js");
     if (!clazz) {
         throw new Error("AFImport: Class " + className + " Not found");
     }
@@ -87,7 +86,7 @@ function includeClass(className, options) {
  *
  * @type {{namespace: string, override: boolean}}
  */
-var optionsDefaults = {
+const optionsDefaults = {
     namespace: "com.afimport.default",
     override: false
 };
@@ -169,7 +168,7 @@ module.exports.provide = function (clazz, className, options) {
  */
 module.exports.require = function (className, options) {
     className = path.basename(className, '.js');
-    var nameSpacedClassName = getOption("namespace", options) + "." + className;
+    const nameSpacedClassName = getOption("namespace", options) + "." + className;
     var clazz = (includes[nameSpacedClassName] || {})["clazz"];
     if (!clazz) {
         for (var i = 0; i < includeQueue.length; i++) {
@@ -189,6 +188,7 @@ module.exports.require = function (className, options) {
  */
 function AFImortModule() {
 }
+
 AFImortModule.prototype.property;
 AFImortModule.prototype.previous;
 
@@ -208,7 +208,7 @@ module.exports.exportModule = function () {
     }
     exports = exports.previous;
 
-    if (!exports.property) {
+    if (!exports || !exports.property) {
         return null;
     }
     return exports;
@@ -218,9 +218,12 @@ module.exports.exportModule = function () {
  *
  * Imports an AFImortModule
  *
- * @param {AFImortModule} afModule
+ * @param {?AFImortModule} afModule
  */
 module.exports.importModule = function (afModule) {
+    if (!afModule) {
+        return;
+    }
     if (!(afModule.constructor.name == "AFImortModule")) {
         throw new Error("incorrect type in module");
     }
